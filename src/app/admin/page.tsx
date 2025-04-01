@@ -160,7 +160,7 @@ const AdminPage: React.FC = () => {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
+        <div className="max-w-md w-full bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-white/50">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-primary mb-2">Панель администратора</h1>
             <p className="text-gray-600">Пожалуйста, введите пароль для доступа</p>
@@ -176,27 +176,27 @@ const AdminPage: React.FC = () => {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary ${
-                  passwordError ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 ${
+                  passwordError ? 'border-secondary/70 focus:ring-secondary/50' : 'border-gray-300 focus:ring-primary/50'
                 }`}
                 placeholder="Введите пароль"
               />
               {passwordError && (
-                <p className="mt-2 text-sm text-red-600">Неверный пароль</p>
+                <p className="mt-2 text-sm text-secondary">Неверный пароль</p>
               )}
             </div>
             
             <div className="flex justify-between items-center">
               <Link 
                 href="/"
-                className="text-primary hover:underline"
+                className="text-primary hover:text-primary/80 transition-colors"
               >
                 Вернуться на главную
               </Link>
               
               <button
                 type="submit"
-                className="bg-primary hover:bg-blue-700 text-black font-bold py-2 px-6 rounded-md transition-colors"
+                className="bg-primary/90 hover:bg-primary text-black font-medium py-2 px-6 rounded-xl transition-all shadow-md hover:shadow-lg"
               >
                 Войти
               </button>
@@ -216,13 +216,13 @@ const AdminPage: React.FC = () => {
           <div className="flex gap-4">
             <button
               onClick={handleLogout}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-4 rounded"
+              className="bg-gray-200/70 hover:bg-gray-300/70 text-gray-800 py-2 px-4 rounded-xl transition-all"
             >
               Выйти
             </button>
             <Link 
               href="/"
-              className="bg-primary hover:bg-blue-700 text-black font-bold py-2 px-4 rounded"
+              className="bg-primary/90 hover:bg-primary text-black font-medium py-2 px-4 rounded-xl transition-all shadow-md hover:shadow-lg"
             >
               На главную
             </Link>
@@ -231,12 +231,12 @@ const AdminPage: React.FC = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Left column - Question list */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6 border border-white/50">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Список вопросов</h2>
               <button 
                 onClick={handleNewQuestion}
-                className="bg-secondary hover:bg-red-600 text-black py-1 px-3 rounded-full text-sm"
+                className="bg-secondary/90 hover:bg-secondary text-black py-1 px-3 rounded-xl text-sm transition-all shadow-sm hover:shadow-md"
               >
                 + Новый вопрос
               </button>
@@ -247,7 +247,7 @@ const AdminPage: React.FC = () => {
               <select 
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value as QuestionCategory)}
-                className="w-full border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white/90"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>
@@ -257,7 +257,7 @@ const AdminPage: React.FC = () => {
               </select>
             </div>
             
-            <div className="overflow-y-auto max-h-96">
+            <div className="overflow-y-auto max-h-96 pr-1">
               {filteredQuestions.length === 0 ? (
                 <p className="text-gray-500 text-center py-4">Нет вопросов в этой категории</p>
               ) : (
@@ -265,8 +265,8 @@ const AdminPage: React.FC = () => {
                   {filteredQuestions.map(question => (
                     <li 
                       key={question.id}
-                      className={`p-3 border rounded-md cursor-pointer hover:bg-gray-50 ${
-                        selectedQuestion?.id === question.id ? 'border-primary bg-blue-50' : 'border-gray-200'
+                      className={`p-3 border rounded-xl cursor-pointer hover:bg-white/40 transition-all ${
+                        selectedQuestion?.id === question.id ? 'border-primary/50 bg-primary/5 shadow-sm' : 'border-gray-200/70'
                       }`}
                       onClick={() => handleSelectQuestion(question)}
                     >
@@ -277,7 +277,7 @@ const AdminPage: React.FC = () => {
                             e.stopPropagation();
                             handleDeleteQuestion(question.id);
                           }}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-secondary hover:text-secondary/80 transition-colors"
                         >
                           ×
                         </button>
@@ -290,7 +290,7 @@ const AdminPage: React.FC = () => {
           </div>
           
           {/* Right column - Question editor */}
-          <div className="bg-white rounded-lg shadow-lg p-6 md:col-span-2">
+          <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6 md:col-span-2 border border-white/50">
             <h2 className="text-xl font-bold mb-4">
               {selectedQuestion ? 'Редактирование вопроса' : 'Новый вопрос'}
             </h2>
@@ -302,7 +302,7 @@ const AdminPage: React.FC = () => {
                   value={selectedQuestion?.category || selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value as QuestionCategory)}
                   disabled={!!selectedQuestion}
-                  className="w-full border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                  className="w-full border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white/90 disabled:bg-gray-100/80 disabled:text-gray-500"
                 >
                   {categories.map(category => (
                     <option key={category} value={category}>
@@ -317,7 +317,7 @@ const AdminPage: React.FC = () => {
                 <textarea 
                   value={questionText}
                   onChange={(e) => setQuestionText(e.target.value)}
-                  className="w-full border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                  className="w-full border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white/90"
                   rows={3}
                   placeholder="Введите текст вопроса"
                 />
@@ -333,14 +333,14 @@ const AdminPage: React.FC = () => {
                       name="correctAnswer"
                       checked={correctAnswerIndex === index}
                       onChange={() => setCorrectAnswerIndex(index)}
-                      className="mr-2"
+                      className="mr-2 text-primary focus:ring-primary/50"
                     />
                     <input 
                       type="text"
                       value={option}
                       onChange={(e) => handleOptionChange(index, e.target.value)}
                       placeholder={`Вариант ${index + 1}`}
-                      className="flex-1 border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                      className="flex-1 border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white/90"
                     />
                   </div>
                 ))}
@@ -350,7 +350,7 @@ const AdminPage: React.FC = () => {
               <div className="flex justify-end pt-4">
                 <button
                   onClick={handleSaveQuestion}
-                  className="bg-primary hover:bg-blue-700 text-black font-bold py-2 px-6 rounded"
+                  className="bg-primary/90 hover:bg-primary text-black font-medium py-2 px-6 rounded-xl transition-all shadow-md hover:shadow-lg"
                 >
                   Сохранить
                 </button>

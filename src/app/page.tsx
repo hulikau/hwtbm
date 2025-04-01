@@ -41,7 +41,7 @@ export default function Home() {
   };
   
   return (
-    <div className="min-h-screen py-12 px-4 bg-background math-bg">
+    <div className="min-h-screen py-12 px-4 bg-background">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-primary mb-6">
@@ -50,7 +50,7 @@ export default function Home() {
           
           <RotatingCube />
           
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl mx-auto mt-8">
+          <div className="bg-white/80 backdrop-blur-md p-8 rounded-2xl shadow-xl max-w-2xl mx-auto mt-8 border border-white/50">
             <p className="text-lg mb-6">
               Мы приглашаем Вас принять участие в квизе «Я знаю математику!».
               Проверьте свои знания по истории и терминологии математики в разделах: арифметика, алгебра, геометрия, тригонометрия. Удачи в игре!
@@ -65,10 +65,10 @@ export default function Home() {
                 id="playerName"
                 value={playerName}
                 onChange={handleNameChange}
-                className={`w-full px-4 py-3 text-lg border-2 rounded-md focus:outline-none focus:ring-2 text-center ${
+                className={`w-full px-4 py-3 text-lg border-2 rounded-xl focus:outline-none focus:ring-2 text-center ${
                   nameError 
-                    ? 'border-secondary focus:ring-secondary' 
-                    : 'border-gray-300 focus:ring-primary focus:border-primary'
+                    ? 'border-secondary focus:ring-secondary/50' 
+                    : 'border-primary/30 focus:ring-primary/50 focus:border-primary'
                 }`}
                 placeholder="Введите ваше имя"
               />
@@ -79,7 +79,7 @@ export default function Home() {
             
             <button
               onClick={handleStartGame}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-black font-bold py-3 px-4 rounded-full text-xl transition-colors shadow-md border-2 border-blue-600"
+              className="w-full bg-primary hover:bg-primary/90 text-black font-bold py-3 px-4 rounded-xl text-xl transition-all shadow-md border border-primary/50 hover:shadow-lg"
             >
               Начать игру
             </button>
@@ -87,14 +87,14 @@ export default function Home() {
             <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Link 
                 href="/leaderboard" 
-                className="text-primary hover:underline font-medium py-2 px-4 rounded-full border border-primary"
+                className="bg-accent/20 hover:bg-accent/30 text-primary py-2 px-6 rounded-xl border border-accent/50 transition-all hover:shadow-md font-medium"
               >
                 Посмотреть таблицу лидеров
               </Link>
               
               <Link 
                 href="/admin" 
-                className="text-gray-700 hover:underline py-2 px-4 rounded-full border border-gray-300 font-medium"
+                className="bg-gray-200/50 hover:bg-gray-300/50 text-gray-700 py-2 px-6 rounded-xl border border-gray-300/50 transition-all hover:shadow-md font-medium"
               >
                 Администрирование
               </Link>

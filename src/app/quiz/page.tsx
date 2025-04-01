@@ -50,7 +50,7 @@ const QuizPage: React.FC = () => {
     // Check if the answer is correct
     const correct = optionIndex === questions[currentQuestionIndex].correctAnswerIndex;
     
-    // Update answer results array
+    // Update answer results array immediately
     const newAnswerResults = [...answerResults];
     newAnswerResults[currentQuestionIndex] = correct;
     setAnswerResults(newAnswerResults);
@@ -81,6 +81,11 @@ const QuizPage: React.FC = () => {
   const finishGame = () => {
     setGameOver(true);
     
+    // Calculate the final score - make sure it's correct by counting correct answers
+    const correctAnswersCount = answerResults.filter(result => result).length;
+    const finalScore = correctAnswersCount * 5;
+    setScore(finalScore); // Update score to ensure it matches correct answers
+    
     // Calculate the elapsed time in seconds
     const endTime = Date.now();
     const elapsedTimeInSeconds = Math.floor((endTime - startTime) / 1000);
@@ -88,7 +93,7 @@ const QuizPage: React.FC = () => {
     // Create a result object
     const result: PlayerResult = {
       name: playerName,
-      score: score,
+      score: finalScore, // Use the final calculated score
       timeInSeconds: elapsedTimeInSeconds,
       date: new Date().toLocaleDateString('ru-RU')
     };
@@ -118,7 +123,7 @@ const QuizPage: React.FC = () => {
   // Loading state
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background math-bg">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin h-12 w-12 border-t-4 border-primary rounded-full mx-auto mb-4"></div>
           <p className="text-lg">Загрузка вопросов...</p>
@@ -130,19 +135,29 @@ const QuizPage: React.FC = () => {
   // Game over state
   if (gameOver) {
     return (
-      <div className="min-h-screen py-12 px-4 bg-background math-bg">
-        <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-8 text-center">
+      <div className="min-h-screen py-12 px-4 bg-background">
+        <div className="max-w-3xl mx-auto bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-white/50 text-center">
           <h2 className="text-3xl font-bold text-primary mb-6">Игра завершена!</h2>
           
-          <div className="mb-8 p-6 bg-accent bg-opacity-10 rounded-lg">
+          <div className="mb-8 p-6 bg-accent/20 rounded-xl">
             <p className="text-xl mb-2">Участник: <span className="font-bold">{playerName}</span></p>
             <p className="text-4xl font-bold text-primary mb-2">{score} из 100 баллов</p>
-            <p className="text-gray-600">Вы ответили правильно на {score / 5} из {questions.length} вопросов</p>
+            <p className="text-gray-600 mb-2">Вы ответили правильно на {score / 5} из {questions.length} вопросов</p>
+            <div className="flex justify-center items-center gap-6 mt-4 text-gray-700">
+              <div className="flex flex-col items-center">
+                <span className="text-sm uppercase font-medium">Время</span>
+                <span className="font-bold">{Math.floor((Date.now() - startTime) / 60000)}м {Math.floor(((Date.now() - startTime) % 60000) / 1000)}с</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-sm uppercase font-medium">Дата</span>
+                <span className="font-bold">{new Date().toLocaleDateString('ru-RU')}</span>
+              </div>
+            </div>
           </div>
           
           <button
             onClick={handleSaveResult}
-            className="bg-primary hover:bg-blue-700 text-black font-bold py-3 px-8 rounded-full text-lg transition-colors shadow-md border-2 border-primary"
+            className="bg-primary/90 hover:bg-primary text-black font-bold py-3 px-8 rounded-xl text-lg transition-all shadow-md hover:shadow-lg"
           >
             СОХРАНИТЬ РЕЗУЛЬТАТ
           </button>
@@ -159,29 +174,29 @@ const QuizPage: React.FC = () => {
   const questionsLeft = questions.length - currentQuestionIndex;
   
   return (
-    <div className="min-h-screen py-12 px-4 bg-background math-bg">
+    <div className="min-h-screen py-12 px-4 bg-background">
       <div className="max-w-4xl mx-auto">
         {/* Header with progress and score */}
         <div className="flex justify-between items-center mb-6">
-          <div className="text-sm px-4 py-2 bg-white rounded-full shadow">
+          <div className="text-sm px-4 py-2 bg-white/80 backdrop-blur-sm rounded-xl shadow border border-white/50">
             <span className="font-bold">Участник:</span> {playerName}
           </div>
-          <div className="px-4 py-2 bg-white rounded-full shadow flex items-center">
-            <span className="text-black font-bold mr-2">Баллы:</span>
-            <span className="bg-primary text-black font-bold px-3 py-1 rounded-full border border-primary">{score}</span>
+          <div className="px-4 py-2 bg-white/80 backdrop-blur-sm rounded-xl shadow border border-white/50 flex items-center">
+            <span className="text-gray-700 font-bold mr-2">Баллы:</span>
+            <span className="bg-primary/90 text-black font-bold px-3 py-1 rounded-xl">{score}</span>
           </div>
         </div>
         
         {/* Enhanced Progress bar with color segments */}
         <div className="mb-8">
           {/* Container for progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-4 mb-1 overflow-hidden shadow">
+          <div className="w-full bg-white/50 backdrop-blur-sm rounded-full h-4 mb-1 overflow-hidden shadow border border-white/40">
             {/* Colored segments for answered questions */}
             <div className="flex h-full">
               {answerResults.map((result, index) => (
                 <div 
                   key={index}
-                  className={`h-full transition-width duration-300 ${result ? 'bg-green-500' : 'bg-red-500'}`}
+                  className={`h-full transition-width duration-300 ${result ? 'bg-green-500/90' : 'bg-red-500/90'}`}
                   style={{ width: `${100 / questions.length}%` }}
                 />
               ))}
@@ -189,14 +204,14 @@ const QuizPage: React.FC = () => {
               {/* Remaining segment for current question (blue) */}
               {currentQuestionIndex < questions.length && (
                 <div 
-                  className="bg-primary h-full transition-width duration-300"
+                  className="bg-primary/90 h-full transition-width duration-300"
                   style={{ width: `${100 / questions.length}%` }}
                 />
               )}
             </div>
           </div>
           
-          <div className="flex justify-between text-sm bg-white px-3 py-1 rounded-full shadow">
+          <div className="flex justify-between text-sm bg-white/80 backdrop-blur-sm px-4 py-2 rounded-xl shadow border border-white/50">
             <span className="font-medium">Вопрос {currentQuestionIndex + 1} из {questions.length}</span>
             <span className="font-medium">Осталось: {questionsLeft} вопр.</span>
           </div>
@@ -204,7 +219,7 @@ const QuizPage: React.FC = () => {
         
         {/* Question counter */}
         <div className="text-center mb-8">
-          <span className="inline-block px-4 py-2 bg-primary text-black rounded-full text-lg font-bold shadow-md border-2 border-primary">
+          <span className="inline-block px-6 py-2 bg-primary/90 text-black rounded-xl text-lg font-bold shadow-md backdrop-blur-sm">
             Вопрос {currentQuestionIndex + 1} из {questions.length}
           </span>
         </div>
