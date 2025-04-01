@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import QuizCard from '@/components/QuizCard';
-import { getRandomQuestions } from '@/data/questions';
+import { getRandomQuestions } from '@/services/questionsService';
 import { Question, PlayerResult } from '@/types';
 import { saveResult } from '@/services/storageService';
 
@@ -35,8 +35,16 @@ const QuizPage: React.FC = () => {
     setPlayerName(name);
     
     // Get random questions for the quiz
-    const randomQuestions = getRandomQuestions(20);
-    setQuestions(randomQuestions);
+    const loadQuestions = async () => {
+      try {
+        const randomQuestions = await getRandomQuestions(20);
+        setQuestions(randomQuestions);
+      } catch (error) {
+        console.error('Error loading questions:', error);
+      }
+    };
+    
+    loadQuestions();
     
     // Record the start time
     setStartTime(Date.now());

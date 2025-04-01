@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Question, QuestionCategory } from '@/types';
-import { questions as initialQuestions } from '@/data/questions';
+import { getAllQuestions, addQuestion, updateQuestion, deleteQuestion } from '@/services/questionsService';
 
 const QUESTIONS_STORAGE_KEY = 'math_quiz_questions';
 const ADMIN_PASSWORD = 'amabru69';
@@ -24,21 +24,16 @@ const AdminPage: React.FC = () => {
   
   // Load questions on component mount
   useEffect(() => {
-    try {
-      const savedQuestionsJson = localStorage.getItem(QUESTIONS_STORAGE_KEY);
-      if (savedQuestionsJson) {
-        const savedQuestions = JSON.parse(savedQuestionsJson) as Question[];
-        setQuestions(savedQuestions);
-      } else {
-        // If no questions in localStorage, use the initial questions
-        setQuestions(initialQuestions);
-        // Save initial questions to localStorage
-        localStorage.setItem(QUESTIONS_STORAGE_KEY, JSON.stringify(initialQuestions));
+    const fetchQuestions = async () => {
+      try {
+        const questions = await getAllQuestions();
+        setQuestions(questions);
+      } catch (error) {
+        console.error('Error loading questions:', error);
       }
-    } catch (error) {
-      console.error('Error loading questions:', error);
-      setQuestions(initialQuestions);
-    }
+    };
+    
+    fetchQuestions();
   }, []);
   
   // Check if admin is already authenticated
@@ -83,51 +78,77 @@ const AdminPage: React.FC = () => {
   };
   
   // Handle saving a question (new or edited)
-  const handleSaveQuestion = () => {
+  const handleSaveQuestion = async () => {
     // Validate inputs
     if (!questionText.trim() || options.some(opt => !opt.trim())) {
       alert('Пожалуйста, заполните все поля');
       return;
     }
     
-    if (selectedQuestion) {
-      // Edit existing question
-      const updatedQuestions = questions.map(q => 
-        q.id === selectedQuestion.id 
-          ? { ...q, text: questionText, options, correctAnswerIndex } 
-          : q
-      );
+    try {
+      if (selectedQuestion) {
+        // Edit existing question
+        const updatedQuestion = {
+          ...selectedQuestion,
+          text: questionText,
+          options,
+          correctAnswerIndex
+        };
+        
+        await updateQuestion(selectedQuestion.id, updatedQuestion);
+        
+        // Update local state
+        const updatedQuestions = questions.map(q => 
+          q.id === selectedQuestion.id ? updatedQuestion : q
+        );
+        
+        setQuestions(updatedQuestions);
+      } else {
+        // Add new question
+        const newQuestion: Question = {
+          id: `${selectedCategory[0]}${Date.now()}`, // Generate a unique ID
+          category: selectedCategory,
+          text: questionText,
+          options,
+          correctAnswerIndex
+        };
+        
+        const newQuestionId = await addQuestion(newQuestion);
+        
+        // Update the question with the Firestore ID if needed
+        const questionWithId = {
+          ...newQuestion,
+          id: newQuestionId || newQuestion.id
+        };
+        
+        // Update local state
+        setQuestions([...questions, questionWithId]);
+      }
       
-      setQuestions(updatedQuestions);
-      localStorage.setItem(QUESTIONS_STORAGE_KEY, JSON.stringify(updatedQuestions));
-    } else {
-      // Add new question
-      const newQuestion: Question = {
-        id: `${selectedCategory[0]}${questions.length + 1}`,
-        category: selectedCategory,
-        text: questionText,
-        options,
-        correctAnswerIndex
-      };
-      
-      const updatedQuestions = [...questions, newQuestion];
-      setQuestions(updatedQuestions);
-      localStorage.setItem(QUESTIONS_STORAGE_KEY, JSON.stringify(updatedQuestions));
+      // Reset form
+      handleNewQuestion();
+    } catch (error) {
+      console.error('Error saving question:', error);
+      alert('Произошла ошибка при сохранении вопроса.');
     }
-    
-    // Reset form
-    handleNewQuestion();
   };
   
   // Handle deleting a question
-  const handleDeleteQuestion = (questionId: string) => {
+  const handleDeleteQuestion = async (questionId: string) => {
     if (confirm('Вы уверены, что хотите удалить этот вопрос?')) {
-      const updatedQuestions = questions.filter(q => q.id !== questionId);
-      setQuestions(updatedQuestions);
-      localStorage.setItem(QUESTIONS_STORAGE_KEY, JSON.stringify(updatedQuestions));
-      
-      if (selectedQuestion?.id === questionId) {
-        handleNewQuestion();
+      try {
+        await deleteQuestion(questionId);
+        
+        // Update local state
+        const updatedQuestions = questions.filter(q => q.id !== questionId);
+        setQuestions(updatedQuestions);
+        
+        if (selectedQuestion?.id === questionId) {
+          handleNewQuestion();
+        }
+      } catch (error) {
+        console.error('Error deleting question:', error);
+        alert('Произошла ошибка при удалении вопроса.');
       }
     }
   };

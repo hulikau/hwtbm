@@ -11,8 +11,18 @@ const LeaderboardPage: React.FC = () => {
   
   useEffect(() => {
     // Get sorted results from storage
-    const sortedResults = getSortedResults();
-    setResults(sortedResults);
+    const fetchResults = async () => {
+      try {
+        const sortedResults = await getSortedResults();
+        setResults(sortedResults);
+      } catch (error) {
+        console.error('Error fetching results:', error);
+        // Fallback to empty array if error occurs
+        setResults([]);
+      }
+    };
+    
+    fetchResults();
   }, []);
   
   return (
