@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { Question, QuestionCategory } from '@/types';
 import { getAllQuestions, addQuestion, updateQuestion, deleteQuestion } from '@/services/questionsService';
 
-const QUESTIONS_STORAGE_KEY = 'math_quiz_questions';
 const ADMIN_PASSWORD = 'amabru69';
 
 const AdminPage: React.FC = () => {

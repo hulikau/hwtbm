@@ -3,10 +3,10 @@ import { Question } from '../types';
 
 interface QuizCardProps {
   question: Question;
-  onAnswer: (index: number) => void;
-  disabled?: boolean;
-  selectedOption?: number;
-  showCorrectAnswer?: boolean;
+  onAnswer: (optionIndex: number) => void;
+  disabled: boolean;
+  selectedOption: number | undefined;
+  showCorrectAnswer: boolean;
 }
 
 const QuizCard: React.FC<QuizCardProps> = ({

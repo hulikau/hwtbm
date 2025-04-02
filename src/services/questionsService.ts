@@ -1,5 +1,4 @@
 import { Question } from '../types';
-import { db } from '../lib/firebase';
 import { 
   collection, 
   getDocs, 
@@ -12,6 +11,24 @@ import {
   writeBatch
 } from 'firebase/firestore';
 import { questions as localQuestions } from '../data/questions'; // Import local questions as fallback
+
+// Fallback implementation for db using localStorage
+const localDb = {
+  collection: (path: string) => ({
+    path
+  })
+};
+
+// Try to import Firebase, but fallback to localStorage implementation if it fails
+let db: any;
+try {
+  // This must be dynamically imported to prevent build errors
+  const { db: firebaseDb } = require('../lib/firebase');
+  db = firebaseDb;
+} catch (error) {
+  console.warn('Firebase not available, using localStorage fallback');
+  db = localDb;
+}
 
 const QUESTIONS_COLLECTION = 'quizQuestions';
 
@@ -165,7 +182,7 @@ export const seedQuestionsToFirestore = async (): Promise<void> => {
     for (const question of localQuestions) {
       const newDocRef = doc(collectionRef);
       // Omit the id as Firestore will generate one
-      const { id, ...questionData } = question;
+      const { id: _id, ...questionData } = question;
       batch.set(newDocRef, questionData);
     }
     

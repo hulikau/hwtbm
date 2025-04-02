@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Leaderboard from '@/components/Leaderboard';
 import { getSortedResults } from '@/services/storageService';
 import { PlayerResult } from '@/types';
 

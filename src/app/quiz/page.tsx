@@ -17,9 +17,8 @@ const QuizPage: React.FC = () => {
   const [showCorrectAnswer, setShowCorrectAnswer] = useState<boolean>(false);
   const [score, setScore] = useState<number>(0);
   const [playerName, setPlayerName] = useState<string>('');
-  const [startTime, setStartTime] = useState<number>(0);
+  const [startTime, setStartTime] = useState<number>(Date.now());
   const [gameOver, setGameOver] = useState<boolean>(false);
-  // Track correct/incorrect answers
   const [answerResults, setAnswerResults] = useState<boolean[]>([]);
   
   // Initialize the quiz
@@ -174,12 +173,8 @@ const QuizPage: React.FC = () => {
     );
   }
   
-  // Current question
+  // Get the current question
   const currentQuestion = questions[currentQuestionIndex];
-  
-  // Calculate progress percentage
-  const progressPercentage = (currentQuestionIndex / questions.length) * 100;
-  const questionsLeft = questions.length - currentQuestionIndex;
   
   return (
     <div className="min-h-screen py-12 px-4 bg-background">
@@ -195,33 +190,19 @@ const QuizPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Enhanced Progress bar with color segments */}
-        <div className="mb-8">
-          {/* Container for progress bar */}
-          <div className="w-full bg-white/50 backdrop-blur-sm rounded-full h-4 mb-1 overflow-hidden shadow border border-white/40">
-            {/* Colored segments for answered questions */}
-            <div className="flex h-full">
-              {answerResults.map((result, index) => (
-                <div 
-                  key={index}
-                  className={`h-full transition-width duration-300 ${result ? 'bg-green-500/90' : 'bg-red-500/90'}`}
-                  style={{ width: `${100 / questions.length}%` }}
-                />
-              ))}
-              
-              {/* Remaining segment for current question (blue) */}
-              {currentQuestionIndex < questions.length && (
-                <div 
-                  className="bg-primary/90 h-full transition-width duration-300"
-                  style={{ width: `${100 / questions.length}%` }}
-                />
-              )}
-            </div>
-          </div>
-          
-          <div className="flex justify-between text-sm bg-white/80 backdrop-blur-sm px-4 py-2 rounded-xl shadow border border-white/50">
-            <span className="font-medium">Вопрос {currentQuestionIndex + 1} из {questions.length}</span>
-            <span className="font-medium">Осталось: {questionsLeft} вопр.</span>
+        {/* Progress bar */}
+        <div className="relative h-2 bg-gray-200/70 w-full rounded-full overflow-hidden mb-4">
+          <div className="absolute left-0 top-0 h-full bg-primary/90 transition-width duration-300" 
+            style={{ width: `${(currentQuestionIndex / questions.length) * 100}%` }}
+          />
+          <div className="absolute left-0 top-0 h-full flex w-full">
+            {answerResults.map((result, index) => (
+              <div 
+                key={index}
+                className={`h-full transition-width duration-300 ${result ? 'bg-green-500/90' : 'bg-red-500/90'}`}
+                style={{ width: `${100 / questions.length}%` }}
+              />
+            ))}
           </div>
         </div>
         
