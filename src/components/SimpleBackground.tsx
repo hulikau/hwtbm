@@ -13,7 +13,7 @@ const SimpleBackground: React.FC = () => {
       const size = Math.floor(Math.random() * 12) + 8; // 8-20px size
       const x = Math.floor(Math.random() * 100); // Position as percentage
       const y = Math.floor(Math.random() * 100); 
-      const type = Math.floor(Math.random() * 3); // 0: circle, 1: rect, 2: polygon
+      const type = Math.floor(Math.random() * 2); // 0: circle, 1: rect (removed triangles)
       
       // Use direct color values
       const colors = [
@@ -81,7 +81,7 @@ const SimpleBackground: React.FC = () => {
                     />
                   </circle>
                 );
-              } else if (shape.type === 1) {
+              } else {
                 // Rectangle
                 return (
                   <rect
@@ -111,34 +111,6 @@ const SimpleBackground: React.FC = () => {
                       additive="sum"
                     />
                   </rect>
-                );
-              } else {
-                // Triangle
-                const points = `${shape.x},${shape.y - shape.size/2} ${shape.x - shape.size/2},${shape.y + shape.size/2} ${shape.x + shape.size/2},${shape.y + shape.size/2}`;
-                return (
-                  <polygon
-                    key={index}
-                    points={points}
-                    fill={shape.color}
-                    opacity="0.8"
-                  >
-                    <animateTransform
-                      attributeName="transform"
-                      type="translate"
-                      values={`0,0; ${20 + index % 10},${10 + index % 5}; ${10 + index % 5},${20 + index % 10}; ${-10 - index % 5},${10 + index % 5}; 0,0`}
-                      dur={`${shape.duration}s`}
-                      repeatCount="indefinite"
-                      additive="sum"
-                    />
-                    <animateTransform
-                      attributeName="transform"
-                      type="rotate"
-                      values={`0 ${shape.x} ${shape.y}; ${shape.rotate} ${shape.x} ${shape.y}; ${-shape.rotate} ${shape.x} ${shape.y}; 0 ${shape.x} ${shape.y}`}
-                      dur={`${shape.duration + 1}s`}
-                      repeatCount="indefinite"
-                      additive="sum"
-                    />
-                  </polygon>
                 );
               }
             })}

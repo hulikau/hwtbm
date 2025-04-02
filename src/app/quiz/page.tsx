@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import QuizCard from '@/components/QuizCard';
-import { getRandomQuestions } from '@/data/questions';
-import { Question, PlayerResult } from '@/types';
-import { saveResult } from '@/services/storageService';
+import { getQuestions } from '@/services/questionService';
+import { saveScore } from '@/services/leaderboardService';
+import { Question, LeaderboardEntry } from '@/types';
 
 const QuizPage: React.FC = () => {
   const router = useRouter();
@@ -19,27 +19,44 @@ const QuizPage: React.FC = () => {
   const [playerName, setPlayerName] = useState<string>('');
   const [startTime, setStartTime] = useState<number>(0);
   const [gameOver, setGameOver] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   // Track correct/incorrect answers
   const [answerResults, setAnswerResults] = useState<boolean[]>([]);
   
   // Initialize the quiz
   useEffect(() => {
-    // Get player name from localStorage or URL params
-    const name = localStorage.getItem('playerName') || '';
-    if (!name) {
-      // If no name is provided, redirect to the home page
-      router.push('/');
-      return;
-    }
+    const initializeQuiz = async () => {
+      // Get player name from localStorage
+      const name = localStorage.getItem('playerName') || '';
+      if (!name) {
+        // If no name is provided, redirect to the home page
+        router.push('/');
+        return;
+      }
+      
+      setPlayerName(name);
+      
+      try {
+        // Get questions from Firebase
+        setLoading(true);
+        const allQuestions = await getQuestions();
+        
+        // Shuffle and limit to 20 questions or all available ones if less than 20
+        const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+        const randomQuestions = shuffled.slice(0, Math.min(20, shuffled.length));
+        
+        setQuestions(randomQuestions);
+      } catch (error) {
+        console.error('Error fetching questions:', error);
+      } finally {
+        setLoading(false);
+      }
+      
+      // Record the start time
+      setStartTime(Date.now());
+    };
     
-    setPlayerName(name);
-    
-    // Get random questions for the quiz
-    const randomQuestions = getRandomQuestions(20);
-    setQuestions(randomQuestions);
-    
-    // Record the start time
-    setStartTime(Date.now());
+    initializeQuiz();
   }, [router]);
   
   // Handle answering a question
@@ -91,42 +108,64 @@ const QuizPage: React.FC = () => {
     const elapsedTimeInSeconds = Math.floor((endTime - startTime) / 1000);
     
     // Create a result object
-    const result: PlayerResult = {
+    const result: LeaderboardEntry = {
       name: playerName,
-      score: finalScore, // Use the final calculated score
-      timeInSeconds: elapsedTimeInSeconds,
-      date: new Date().toLocaleDateString('ru-RU')
+      score: finalScore,
+      timeInSeconds: elapsedTimeInSeconds
     };
     
-    // Save the result in local storage
+    // Save the result in local storage temporarily
     localStorage.setItem('lastResult', JSON.stringify(result));
   };
   
   // Save the result and go to the leaderboard
-  const handleSaveResult = () => {
+  const handleSaveResult = async () => {
     // Get the result from localStorage
     const resultJson = localStorage.getItem('lastResult');
     if (resultJson) {
-      const result = JSON.parse(resultJson) as PlayerResult;
-      
-      // Save the result using the storage service
-      saveResult(result);
-      
-      // Clean up
-      localStorage.removeItem('lastResult');
-      
-      // Navigate to the leaderboard
-      router.push('/leaderboard');
+      try {
+        const entry = JSON.parse(resultJson) as LeaderboardEntry;
+        
+        // Save the score to Firebase
+        await saveScore(entry);
+        
+        // Clean up
+        localStorage.removeItem('lastResult');
+        
+        // Navigate to the leaderboard
+        router.push('/leaderboard');
+      } catch (error) {
+        console.error('Error saving score:', error);
+        alert('Произошла ошибка при сохранении результата. Пожалуйста, попробуйте еще раз.');
+      }
     }
   };
   
   // Loading state
-  if (questions.length === 0) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <div className="animate-spin h-12 w-12 border-t-4 border-primary rounded-full mx-auto mb-4"></div>
           <p className="text-lg">Загрузка вопросов...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // No questions available
+  if (questions.length === 0 && !loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center max-w-lg p-8 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-white/50">
+          <h2 className="text-2xl font-bold text-primary mb-4">Нет доступных вопросов</h2>
+          <p className="mb-6">К сожалению, не удалось загрузить вопросы для квиза. Пожалуйста, попробуйте позже.</p>
+          <button
+            onClick={() => router.push('/')}
+            className="bg-primary/90 hover:bg-primary text-black font-bold py-2 px-6 rounded-xl transition-all shadow-md hover:shadow-lg"
+          >
+            Вернуться на главную
+          </button>
         </div>
       </div>
     );

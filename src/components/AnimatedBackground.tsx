@@ -9,7 +9,7 @@ interface Shape {
   color: string;
   vx: number;
   vy: number;
-  type: 'circle' | 'square' | 'triangle';
+  type: 'circle' | 'square';
 }
 
 const AnimatedBackground: React.FC = () => {
@@ -34,10 +34,10 @@ const AnimatedBackground: React.FC = () => {
     // Create shapes
     const shapes: Shape[] = [];
     const colors = ['#5B7DB1', '#F75D7E', '#FFCE6A', '#4285F4', '#EA4335', '#FBBC05', '#34A853'];
-    const numShapes = Math.min(150, Math.floor(window.innerWidth * window.innerHeight / 8000));
+    const numShapes = Math.min(300, Math.floor(window.innerWidth * window.innerHeight / 5000));
     
     for (let i = 0; i < numShapes; i++) {
-      const size = Math.random() * 40 + 20; // Much larger shapes
+      const size = Math.random() * 60 + 60; // Much larger shapes
       shapes.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -45,7 +45,7 @@ const AnimatedBackground: React.FC = () => {
         color: colors[Math.floor(Math.random() * colors.length)],
         vx: (Math.random() - 0.5) * 2.5,
         vy: (Math.random() - 0.5) * 2.5,
-        type: ['circle', 'square', 'triangle'][Math.floor(Math.random() * 3)] as 'circle' | 'square' | 'triangle'
+        type: ['circle', 'square'][Math.floor(Math.random() * 2)] as 'circle' | 'square'
       });
     }
     
@@ -71,16 +71,6 @@ const AnimatedBackground: React.FC = () => {
             shape.size,
             shape.size
           );
-          ctx.fill();
-          ctx.stroke();
-          break;
-          
-        case 'triangle':
-          ctx.beginPath();
-          ctx.moveTo(shape.x, shape.y - shape.size / 2);
-          ctx.lineTo(shape.x - shape.size / 2, shape.y + shape.size / 2);
-          ctx.lineTo(shape.x + shape.size / 2, shape.y + shape.size / 2);
-          ctx.closePath();
           ctx.fill();
           ctx.stroke();
           break;
