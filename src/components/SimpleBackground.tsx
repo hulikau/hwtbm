@@ -1,9 +1,21 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+
+interface Shape {
+  size: number;
+  x: number;
+  y: number;
+  type: number;
+  color: string;
+  delay: number;
+  duration: number;
+  rotate: number;
+}
 
 const SimpleBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [shapes, setShapes] = useState<Shape[]>([]);
 
   useEffect(() => {
     const generatedShapes = Array.from({ length: 150 }, (_, i) => {
