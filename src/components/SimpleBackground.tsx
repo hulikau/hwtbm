@@ -6,49 +6,116 @@ const SimpleBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
-    
-    // Set canvas dimensions
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    
-    window.addEventListener('resize', resize);
-    resize();
-    
-    // Create animated background
-    const animate = () => {
-      if (!canvas || !ctx) return;
+    const generatedShapes = Array.from({ length: 150 }, (_, i) => {
+      // Randomize properties
+      const size = Math.floor(Math.random() * 12) + 8; // 8-20px size
+      const x = Math.floor(Math.random() * 100); // Position as percentage
+      const y = Math.floor(Math.random() * 100); 
+      const type = Math.floor(Math.random() * 2); // 0: circle, 1: rect (removed triangles)
       
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Use direct color values
+      const colors = [
+        '#93c5fd', '#f9a8d4', '#fcd34d', '#86efac', 
+        '#c4b5fd', '#a5b4fc', '#fca5a5', '#a5f3fc'
+      ];
+      const color = colors[Math.floor(Math.random() * colors.length)];
       
-      // Fill with gradient
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, '#e6f7ff');
-      gradient.addColorStop(1, '#f0f8ff');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const delay = Math.floor(Math.random() * 5); // Animation delay
+      const duration = Math.floor(Math.random() * 3) + 5; // 5-8s duration
+      const rotate = Math.floor(Math.random() * 45) - 22; // Random rotation
       
-      requestAnimationFrame(animate);
-    };
+      return { size, x, y, type, color, delay, duration, rotate };
+    });
     
-    animate();
-    
-    return () => {
-      window.removeEventListener('resize', resize);
-    };
+    setShapes(generatedShapes);
   }, []);
   
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full -z-10"
-    />
+    <div className="fixed inset-0 -z-10 overflow-hidden">
+      {/* Gradient background */}
+      <div 
+        className="absolute inset-0" 
+        style={{ 
+          background: "linear-gradient(120deg, #e0f2fe, #ede9fe, #fce7f3)",
+          zIndex: -10
+        }}
+      />
+      
+      {/* SVG container - only render shapes on client side */}
+      <svg 
+        className="absolute inset-0 w-full h-full"
+        style={{ zIndex: -5 }}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {shapes.length > 0 && (
+          <>
+            {shapes.map((shape, index) => {
+              if (shape.type === 0) {
+                // Circle
+                return (
+                  <circle
+                    key={index}
+                    cx={`${shape.x}%`}
+                    cy={`${shape.y}%`}
+                    r={shape.size / 2}
+                    fill={shape.color}
+                    opacity="0.8"
+                  >
+                    <animateTransform
+                      attributeName="transform"
+                      type="translate"
+                      values={`0,0; ${20 + index % 10},${10 + index % 5}; ${10 + index % 5},${20 + index % 10}; ${-10 - index % 5},${10 + index % 5}; 0,0`}
+                      dur={`${shape.duration}s`}
+                      repeatCount="indefinite"
+                      additive="sum"
+                    />
+                    <animateTransform
+                      attributeName="transform"
+                      type="rotate"
+                      values={`0 ${shape.x} ${shape.y}; ${shape.rotate} ${shape.x} ${shape.y}; ${-shape.rotate} ${shape.x} ${shape.y}; 0 ${shape.x} ${shape.y}`}
+                      dur={`${shape.duration + 2}s`}
+                      repeatCount="indefinite"
+                      additive="sum"
+                    />
+                  </circle>
+                );
+              } else {
+                // Rectangle
+                return (
+                  <rect
+                    key={index}
+                    x={`${shape.x}%`}
+                    y={`${shape.y}%`}
+                    width={shape.size}
+                    height={shape.size}
+                    rx="2"
+                    fill={shape.color}
+                    opacity="0.8"
+                  >
+                    <animateTransform
+                      attributeName="transform"
+                      type="translate"
+                      values={`0,0; ${20 + index % 10},${10 + index % 5}; ${10 + index % 5},${20 + index % 10}; ${-10 - index % 5},${10 + index % 5}; 0,0`}
+                      dur={`${shape.duration}s`}
+                      repeatCount="indefinite"
+                      additive="sum"
+                    />
+                    <animateTransform
+                      attributeName="transform"
+                      type="rotate"
+                      values={`0 ${shape.x} ${shape.y}; ${shape.rotate} ${shape.x} ${shape.y}; ${-shape.rotate} ${shape.x} ${shape.y}; 0 ${shape.x} ${shape.y}`}
+                      dur={`${shape.duration + 3}s`}
+                      repeatCount="indefinite"
+                      additive="sum"
+                    />
+                  </rect>
+                );
+              }
+            })}
+          </>
+        )}
+      </svg>
+    </div>
   );
 };
 

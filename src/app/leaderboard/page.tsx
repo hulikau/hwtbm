@@ -2,26 +2,27 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getSortedResults } from '@/services/storageService';
-import { PlayerResult } from '@/types';
+import { getLeaderboard } from '@/services/leaderboardService';
+import { LeaderboardEntry } from '@/types';
 
 const LeaderboardPage: React.FC = () => {
-  const [results, setResults] = useState<PlayerResult[]>([]);
+  const [results, setResults] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   
   useEffect(() => {
-    // Get sorted results from storage
-    const fetchResults = async () => {
+    const fetchLeaderboard = async () => {
       try {
-        const sortedResults = await getSortedResults();
-        setResults(sortedResults);
+        setLoading(true);
+        const leaderboardData = await getLeaderboard(20); // Get top 20 scores
+        setResults(leaderboardData);
       } catch (error) {
-        console.error('Error fetching results:', error);
-        // Fallback to empty array if error occurs
-        setResults([]);
+        console.error('Error fetching leaderboard:', error);
+      } finally {
+        setLoading(false);
       }
     };
     
-    fetchResults();
+    fetchLeaderboard();
   }, []);
   
   return (
@@ -33,7 +34,11 @@ const LeaderboardPage: React.FC = () => {
         </div>
         
         <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-white/50">
-          {results.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-xl text-gray-600">Загрузка результатов...</p>
+            </div>
+          ) : results.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-xl text-gray-600">Пока нет результатов</p>
               <p className="mt-4 text-gray-500">Будьте первым, кто пройдет квиз!</p>
@@ -53,7 +58,7 @@ const LeaderboardPage: React.FC = () => {
                 <tbody className="divide-y divide-gray-200/70">
                   {results.map((entry, index) => (
                     <tr 
-                      key={index} 
+                      key={entry.id || index} 
                       className={index === 0 ? "bg-accent/10" : index === 1 ? "bg-primary/5" : index === 2 ? "bg-secondary/5" : "hover:bg-gray-50/50"}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -77,7 +82,9 @@ const LeaderboardPage: React.FC = () => {
                         {Math.floor(entry.timeInSeconds / 60)}м {entry.timeInSeconds % 60}с
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                        {new Date(entry.date).toLocaleDateString()}
+                        {entry.timestamp 
+                          ? new Date(entry.timestamp).toLocaleDateString() 
+                          : 'Н/Д'}
                       </td>
                     </tr>
                   ))}

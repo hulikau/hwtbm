@@ -6,25 +6,28 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "node -r dotenv/config ./node_modules/.bin/ts-node -r tsconfig-paths/register ./src/scripts/runSeed.ts",
+    "seed:leaderboard": "node -r dotenv/config ./node_modules/.bin/ts-node -r tsconfig-paths/register ./src/scripts/runSeedLeaderboard.ts"
   },
   "dependencies": {
     "firebase": "^11.6.0",
-    "firebase-admin": "^13.2.0",
     "next": "15.2.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@next/bundle-analyzer": "^15.2.4",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20.17.30",
+    "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^16.4.7",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5"
   }
 }

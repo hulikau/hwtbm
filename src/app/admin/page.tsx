@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Question, QuestionCategory } from '@/types';
-import { getAllQuestions, addQuestion, updateQuestion, deleteQuestion } from '@/services/questionsService';
+import { getQuestions, addQuestion, updateQuestion, deleteQuestion } from '@/services/questionService';
 
 const ADMIN_PASSWORD = 'amabru69';
 
@@ -11,6 +11,8 @@ const AdminPage: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<QuestionCategory>('arithmetic');
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saveLoading, setSaveLoading] = useState<boolean>(false);
   
   const [questionText, setQuestionText] = useState<string>('');
   const [options, setOptions] = useState<string[]>(['', '', '', '']);
@@ -23,17 +25,23 @@ const AdminPage: React.FC = () => {
   
   // Load questions on component mount
   useEffect(() => {
-    const fetchQuestions = async () => {
+    const loadQuestions = async () => {
+      if (!isAuthenticated) return;
+      
       try {
-        const questions = await getAllQuestions();
-        setQuestions(questions);
+        setLoading(true);
+        const fetchedQuestions = await getQuestions();
+        setQuestions(fetchedQuestions);
       } catch (error) {
         console.error('Error loading questions:', error);
+        alert('Ошибка при загрузке вопросов. Пожалуйста, попробуйте еще раз.');
+      } finally {
+        setLoading(false);
       }
     };
     
-    fetchQuestions();
-  }, []);
+    loadQuestions();
+  }, [isAuthenticated]);
   
   // Check if admin is already authenticated
   useEffect(() => {
@@ -85,50 +93,45 @@ const AdminPage: React.FC = () => {
     }
     
     try {
+      setSaveLoading(true);
+      
       if (selectedQuestion) {
         // Edit existing question
-        const updatedQuestion = {
-          ...selectedQuestion,
+        await updateQuestion(selectedQuestion.id, {
           text: questionText,
           options,
           correctAnswerIndex
-        };
-        
-        await updateQuestion(selectedQuestion.id, updatedQuestion);
+        });
         
         // Update local state
-        const updatedQuestions = questions.map(q => 
-          q.id === selectedQuestion.id ? updatedQuestion : q
-        );
-        
-        setQuestions(updatedQuestions);
+        setQuestions(questions.map(q => 
+          q.id === selectedQuestion.id 
+            ? { ...q, text: questionText, options, correctAnswerIndex } 
+            : q
+        ));
       } else {
         // Add new question
-        const newQuestion: Question = {
-          id: `${selectedCategory[0]}${Date.now()}`, // Generate a unique ID
+        const newQuestionData = {
           category: selectedCategory,
           text: questionText,
           options,
           correctAnswerIndex
         };
         
-        const newQuestionId = await addQuestion(newQuestion);
-        
-        // Update the question with the Firestore ID if needed
-        const questionWithId = {
-          ...newQuestion,
-          id: newQuestionId || newQuestion.id
-        };
+        // Add to Firebase
+        const newId = await addQuestion(newQuestionData);
         
         // Update local state
-        setQuestions([...questions, questionWithId]);
+        setQuestions([...questions, { id: newId, ...newQuestionData }]);
       }
       
       // Reset form
       handleNewQuestion();
     } catch (error) {
       console.error('Error saving question:', error);
-      alert('Произошла ошибка при сохранении вопроса.');
+      alert('Ошибка при сохранении вопроса. Пожалуйста, попробуйте еще раз.');
+    } finally {
+      setSaveLoading(false);
     }
   };
   
@@ -136,18 +139,18 @@ const AdminPage: React.FC = () => {
   const handleDeleteQuestion = async (questionId: string) => {
     if (confirm('Вы уверены, что хотите удалить этот вопрос?')) {
       try {
+        // Delete from Firebase
         await deleteQuestion(questionId);
         
         // Update local state
-        const updatedQuestions = questions.filter(q => q.id !== questionId);
-        setQuestions(updatedQuestions);
+        setQuestions(questions.filter(q => q.id !== questionId));
         
         if (selectedQuestion?.id === questionId) {
           handleNewQuestion();
         }
       } catch (error) {
         console.error('Error deleting question:', error);
-        alert('Произошла ошибка при удалении вопроса.');
+        alert('Ошибка при удалении вопроса. Пожалуйста, попробуйте еще раз.');
       }
     }
   };
@@ -227,157 +230,167 @@ const AdminPage: React.FC = () => {
     );
   }
   
-  // Admin panel view (shown only after authentication)
   return (
     <div className="min-h-screen py-12 px-4 bg-background">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-primary">Управление вопросами</h1>
+          <h1 className="text-3xl font-bold text-primary">Панель администратора</h1>
+          
           <div className="flex gap-4">
-            <button
-              onClick={handleLogout}
-              className="bg-gray-200/70 hover:bg-gray-300/70 text-gray-800 py-2 px-4 rounded-xl transition-all"
-            >
-              Выйти
-            </button>
             <Link 
-              href="/"
-              className="bg-primary/90 hover:bg-primary text-black font-medium py-2 px-4 rounded-xl transition-all shadow-md hover:shadow-lg"
+              href="/" 
+              className="bg-gray-200/50 hover:bg-gray-300/50 text-gray-700 py-2 px-4 rounded-xl border border-gray-300/50 transition-all hover:shadow-md font-medium"
             >
               На главную
             </Link>
+            <button
+              onClick={handleLogout}
+              className="bg-secondary/10 hover:bg-secondary/20 text-secondary py-2 px-4 rounded-xl border border-secondary/30 transition-all hover:shadow-md font-medium"
+            >
+              Выйти
+            </button>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Left column - Question list */}
-          <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6 border border-white/50">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Список вопросов</h2>
-              <button 
-                onClick={handleNewQuestion}
-                className="bg-secondary/90 hover:bg-secondary text-black py-1 px-3 rounded-xl text-sm transition-all shadow-sm hover:shadow-md"
-              >
-                + Новый вопрос
-              </button>
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Категория</label>
-              <select 
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value as QuestionCategory)}
-                className="w-full border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white/90"
-              >
-                {categories.map(category => (
-                  <option key={category} value={category}>
-                    {categoryNames[category]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="overflow-y-auto max-h-96 pr-1">
-              {filteredQuestions.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">Нет вопросов в этой категории</p>
-              ) : (
-                <ul className="space-y-2">
-                  {filteredQuestions.map(question => (
-                    <li 
-                      key={question.id}
-                      className={`p-3 border rounded-xl cursor-pointer hover:bg-white/40 transition-all ${
-                        selectedQuestion?.id === question.id ? 'border-primary/50 bg-primary/5 shadow-sm' : 'border-gray-200/70'
-                      }`}
-                      onClick={() => handleSelectQuestion(question)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="text-sm truncate flex-1 pr-2">{question.text}</div>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteQuestion(question.id);
-                          }}
-                          className="text-secondary hover:text-secondary/80 transition-colors"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="animate-spin h-12 w-12 border-t-4 border-primary rounded-full mx-auto mb-4"></div>
+            <p className="text-lg">Загрузка вопросов...</p>
           </div>
-          
-          {/* Right column - Question editor */}
-          <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl p-6 md:col-span-2 border border-white/50">
-            <h2 className="text-xl font-bold mb-4">
-              {selectedQuestion ? 'Редактирование вопроса' : 'Новый вопрос'}
-            </h2>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Категория</label>
-                <select 
-                  value={selectedQuestion?.category || selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value as QuestionCategory)}
-                  disabled={!!selectedQuestion}
-                  className="w-full border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white/90 disabled:bg-gray-100/80 disabled:text-gray-500"
-                >
-                  {categories.map(category => (
-                    <option key={category} value={category}>
-                      {categoryNames[category]}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Текст вопроса</label>
-                <textarea 
-                  value={questionText}
-                  onChange={(e) => setQuestionText(e.target.value)}
-                  className="w-full border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white/90"
-                  rows={3}
-                  placeholder="Введите текст вопроса"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Варианты ответов</label>
-                {options.map((option, index) => (
-                  <div key={index} className="flex items-center mb-2">
-                    <input 
-                      type="radio" 
-                      id={`option-${index}`}
-                      name="correctAnswer"
-                      checked={correctAnswerIndex === index}
-                      onChange={() => setCorrectAnswerIndex(index)}
-                      className="mr-2 text-primary focus:ring-primary/50"
-                    />
-                    <input 
-                      type="text"
-                      value={option}
-                      onChange={(e) => handleOptionChange(index, e.target.value)}
-                      placeholder={`Вариант ${index + 1}`}
-                      className="flex-1 border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 bg-white/90"
-                    />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Questions list */}
+            <div className="lg:col-span-1">
+              <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-white/50">
+                <div className="mb-4">
+                  <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                    Категория
+                  </label>
+                  <select
+                    id="category"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value as QuestionCategory)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  >
+                    {categories.map(category => (
+                      <option key={category} value={category}>
+                        {categoryNames[category]}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="mb-4 flex justify-between items-center">
+                  <h3 className="text-lg font-medium">Вопросы ({filteredQuestions.length})</h3>
+                  <button
+                    onClick={handleNewQuestion}
+                    className="bg-accent/20 hover:bg-accent/30 text-primary py-1 px-3 rounded-lg border border-accent/50 transition-all hover:shadow-sm font-medium text-sm"
+                  >
+                    + Новый вопрос
+                  </button>
+                </div>
+                
+                {filteredQuestions.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    Нет вопросов в этой категории
                   </div>
-                ))}
-                <p className="text-sm text-gray-500 mt-1">Выберите правильный ответ, отметив соответствующий переключатель</p>
+                ) : (
+                  <div className="max-h-[500px] overflow-y-auto pr-2">
+                    {filteredQuestions.map(question => (
+                      <div 
+                        key={question.id}
+                        className={`mb-3 p-3 rounded-xl cursor-pointer border transition-colors ${
+                          selectedQuestion?.id === question.id
+                            ? 'bg-primary/10 border-primary/30'
+                            : 'bg-white/70 hover:bg-gray-100/70 border-gray-100'
+                        }`}
+                        onClick={() => handleSelectQuestion(question)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <p className="text-sm font-medium line-clamp-2 flex-1">{question.text}</p>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteQuestion(question.id);
+                            }}
+                            className="ml-2 text-secondary/70 hover:text-secondary transition-colors"
+                          >
+                            <span>×</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              
-              <div className="flex justify-end pt-4">
-                <button
-                  onClick={handleSaveQuestion}
-                  className="bg-primary/90 hover:bg-primary text-black font-medium py-2 px-6 rounded-xl transition-all shadow-md hover:shadow-lg"
-                >
-                  Сохранить
-                </button>
+            </div>
+            
+            {/* Question form */}
+            <div className="lg:col-span-2">
+              <div className="bg-white/80 backdrop-blur-md rounded-2xl shadow-lg p-6 border border-white/50">
+                <h2 className="text-xl font-bold mb-6">
+                  {selectedQuestion ? 'Редактировать вопрос' : 'Новый вопрос'}
+                </h2>
+                
+                <div className="mb-6">
+                  <label htmlFor="questionText" className="block text-sm font-medium text-gray-700 mb-1">
+                    Текст вопроса
+                  </label>
+                  <textarea
+                    id="questionText"
+                    value={questionText}
+                    onChange={(e) => setQuestionText(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    rows={3}
+                    placeholder="Введите текст вопроса"
+                  />
+                </div>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Варианты ответов
+                  </label>
+                  
+                  {options.map((option, index) => (
+                    <div key={index} className="mb-3 flex items-center">
+                      <div className="mr-3">
+                        <input
+                          type="radio"
+                          id={`option${index}`}
+                          name="correctAnswer"
+                          checked={correctAnswerIndex === index}
+                          onChange={() => setCorrectAnswerIndex(index)}
+                          className="cursor-pointer h-5 w-5 text-primary focus:ring-primary/50"
+                        />
+                      </div>
+                      <input
+                        type="text"
+                        value={option}
+                        onChange={(e) => handleOptionChange(index, e.target.value)}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        placeholder={`Вариант ${index + 1}`}
+                      />
+                    </div>
+                  ))}
+                  
+                  <div className="mt-3 text-sm text-gray-500">
+                    Выберите правильный ответ, отметив соответствующий вариант
+                  </div>
+                </div>
+                
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSaveQuestion}
+                    disabled={saveLoading}
+                    className="bg-primary/90 hover:bg-primary text-black font-bold py-2 px-6 rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-70"
+                  >
+                    {saveLoading ? 'Сохранение...' : 'Сохранить вопрос'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -18,6 +18,15 @@ export interface PlayerResult {
   date: string;
 }
 
+// Leaderboard entry
+export interface LeaderboardEntry {
+  id?: string;
+  name: string;
+  score: number;
+  timeInSeconds: number;
+  timestamp?: string;
+}
+
 // Quiz state
 export interface QuizState {
   currentQuestionIndex: number;
