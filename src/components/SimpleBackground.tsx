@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface Shape {
   size: number;
@@ -14,11 +14,10 @@ interface Shape {
 }
 
 const SimpleBackground: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [shapes, setShapes] = useState<Shape[]>([]);
 
   useEffect(() => {
-    const generatedShapes = Array.from({ length: 150 }, (_, i) => {
+    const generatedShapes = Array.from({ length: 150 }, () => {
       // Randomize properties
       const size = Math.floor(Math.random() * 12) + 8; // 8-20px size
       const x = Math.floor(Math.random() * 100); // Position as percentage
