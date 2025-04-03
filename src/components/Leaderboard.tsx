@@ -43,7 +43,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ results }) => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {results.map((result, index) => (
-                <tr key={`${result.name}-${index}`} className={index < 3 ? "bg-accent bg-opacity-10" : ""}>
+                <tr key={`${result.name}-${index}`} className={index < 0 ? "bg-accent bg-opacity-10" : ""}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm">
                     {index + 1}
                   </td>

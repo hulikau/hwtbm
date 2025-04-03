@@ -105,15 +105,11 @@ const LeaderboardPage: React.FC = () => {
                     {results.map((entry, index) => (
                       <tr 
                         key={entry.id || index} 
-                        className={index === 0 ? "bg-accent/10" : index === 1 ? "bg-primary/5" : index === 2 ? "bg-secondary/5" : "hover:bg-gray-50/50"}
+                        className="hover:bg-gray-50/50"
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className={`
-                            flex items-center justify-center w-8 h-8 rounded-full
-                            ${index === 0 ? 'bg-accent/30 text-primary' : 
-                              index === 1 ? 'bg-primary/30 text-primary' : 
-                              index === 2 ? 'bg-secondary/30 text-secondary' : 'bg-gray-200 text-gray-700'}
-                            font-bold text-sm
+                            flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 text-gray-700 font-bold text-sm
                           `}>
                             {(currentPage - 1) * pageSize + index + 1}
                           </div>
