@@ -7,8 +7,6 @@
     "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
-    "seed:leaderboard": "ts-node src/scripts/seedLeaderboard.ts",
-    "seed:questions": "ts-node src/scripts/seedQuestions.ts",
     "deploy": "gcloud app deploy"
   },
   "dependencies": {

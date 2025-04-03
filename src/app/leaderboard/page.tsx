@@ -8,13 +8,17 @@ import { LeaderboardEntry } from '@/types';
 const LeaderboardPage: React.FC = () => {
   const [results, setResults] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalEntries, setTotalEntries] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(10);
   
   useEffect(() => {
     const fetchLeaderboard = async () => {
       try {
         setLoading(true);
-        const leaderboardData = await getLeaderboard(20); // Get top 20 scores
-        setResults(leaderboardData);
+        const leaderboardData = await getLeaderboard(currentPage, pageSize);
+        setResults(leaderboardData.entries);
+        setTotalEntries(leaderboardData.total);
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
       } finally {
@@ -23,7 +27,48 @@ const LeaderboardPage: React.FC = () => {
     };
     
     fetchLeaderboard();
-  }, []);
+  }, [currentPage, pageSize]);
+  
+  const totalPages = Math.ceil(totalEntries / pageSize);
+  
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+  
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+  
+  // Function to render medal icon based on position (only on first page)
+  const renderMedal = (index: number) => {
+    if (currentPage !== 1) return null;
+    
+    switch (index) {
+      case 0:
+        return (
+          <span className="text-yellow-500 text-xl mr-1" title="Золото">
+            🥇
+          </span>
+        );
+      case 1:
+        return (
+          <span className="text-gray-400 text-xl mr-1" title="Серебро">
+            🥈
+          </span>
+        );
+      case 2:
+        return (
+          <span className="text-amber-700 text-xl mr-1" title="Бронза">
+            🥉
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
   
   return (
     <div className="min-h-screen py-12 px-4 bg-background">
@@ -44,53 +89,130 @@ const LeaderboardPage: React.FC = () => {
               <p className="mt-4 text-gray-500">Будьте первым, кто пройдет квиз!</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="bg-gray-100/70 text-left text-gray-700">
-                    <th className="px-6 py-3 rounded-tl-xl font-bold tracking-wider">#</th>
-                    <th className="px-6 py-3 font-bold tracking-wider">Имя</th>
-                    <th className="px-6 py-3 font-bold tracking-wider">Баллы</th>
-                    <th className="px-6 py-3 font-bold tracking-wider">Время</th>
-                    <th className="px-6 py-3 rounded-tr-xl font-bold tracking-wider">Дата</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200/70">
-                  {results.map((entry, index) => (
-                    <tr 
-                      key={entry.id || index} 
-                      className={index === 0 ? "bg-accent/10" : index === 1 ? "bg-primary/5" : index === 2 ? "bg-secondary/5" : "hover:bg-gray-50/50"}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className={`
-                          flex items-center justify-center w-8 h-8 rounded-full
-                          ${index === 0 ? 'bg-accent/30 text-primary' : 
-                            index === 1 ? 'bg-primary/30 text-primary' : 
-                            index === 2 ? 'bg-secondary/30 text-secondary' : 'bg-gray-200 text-gray-700'}
-                          font-bold text-sm
-                        `}>
-                          {index + 1}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap font-medium">{entry.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 bg-primary/10 text-primary rounded-lg font-bold">
-                          {entry.score}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                        {Math.floor(entry.timeInSeconds / 60)}м {entry.timeInSeconds % 60}с
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                        {entry.timestamp 
-                          ? new Date(entry.timestamp).toLocaleDateString() 
-                          : 'Н/Д'}
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                    <tr className="bg-gray-100/70 text-left text-gray-700">
+                      <th className="px-6 py-3 rounded-tl-xl font-bold tracking-wider">#</th>
+                      <th className="px-6 py-3 font-bold tracking-wider">Имя</th>
+                      <th className="px-6 py-3 font-bold tracking-wider">Баллы</th>
+                      <th className="px-6 py-3 font-bold tracking-wider">Время</th>
+                      <th className="px-6 py-3 rounded-tr-xl font-bold tracking-wider">Дата</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200/70">
+                    {results.map((entry, index) => (
+                      <tr 
+                        key={entry.id || index} 
+                        className={index === 0 ? "bg-accent/10" : index === 1 ? "bg-primary/5" : index === 2 ? "bg-secondary/5" : "hover:bg-gray-50/50"}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`
+                            flex items-center justify-center w-8 h-8 rounded-full
+                            ${index === 0 ? 'bg-accent/30 text-primary' : 
+                              index === 1 ? 'bg-primary/30 text-primary' : 
+                              index === 2 ? 'bg-secondary/30 text-secondary' : 'bg-gray-200 text-gray-700'}
+                            font-bold text-sm
+                          `}>
+                            {(currentPage - 1) * pageSize + index + 1}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap font-medium">
+                          <div className="flex items-center">
+                            {renderMedal(index)}
+                            {entry.name}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 bg-primary/10 text-primary rounded-lg font-bold">
+                            {entry.score}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                          {Math.floor(entry.timeInSeconds / 60)}м {entry.timeInSeconds % 60}с
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                          {entry.timestamp 
+                            ? new Date(entry.timestamp).toLocaleDateString() 
+                            : 'Н/Д'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {/* Pagination Controls */}
+              <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Показать:</span>
+                  <select 
+                    className="bg-white border border-gray-300 rounded-md px-2 py-1 text-sm"
+                    value={pageSize}
+                    onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                  <span className="text-sm text-gray-600">записей</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded-md text-sm ${
+                      currentPage === 1 
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                        : 'bg-primary/20 text-primary hover:bg-primary/30'
+                    }`}
+                  >
+                    «
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1 rounded-md text-sm ${
+                      currentPage === 1 
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                        : 'bg-primary/20 text-primary hover:bg-primary/30'
+                    }`}
+                  >
+                    ‹
+                  </button>
+                  
+                  <span className="px-3 py-1 text-sm">
+                    Страница {currentPage} из {totalPages}
+                  </span>
+                  
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1 rounded-md text-sm ${
+                      currentPage === totalPages 
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                        : 'bg-primary/20 text-primary hover:bg-primary/30'
+                    }`}
+                  >
+                    ›
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1 rounded-md text-sm ${
+                      currentPage === totalPages 
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                        : 'bg-primary/20 text-primary hover:bg-primary/30'
+                    }`}
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            </>
           )}
           
           <div className="mt-8 flex justify-center gap-4">
