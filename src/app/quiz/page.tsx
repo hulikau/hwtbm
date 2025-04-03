@@ -88,18 +88,21 @@ const QuizPage: React.FC = () => {
         setSelectedOption(undefined);
         setShowCorrectAnswer(false);
       } else {
-        // Game over
-        finishGame();
+        // Game over - pass the updated answerResults to ensure the last answer is included
+        finishGame(newAnswerResults);
       }
     }, 1500);
   };
   
   // Finish the game and save the result
-  const finishGame = () => {
+  const finishGame = (updatedAnswerResults?: boolean[]) => {
     setGameOver(true);
     
+    // Use the passed answerResults if available, otherwise use the state
+    const resultsToUse = updatedAnswerResults || answerResults;
+    
     // Calculate the final score - make sure it's correct by counting correct answers
-    const correctAnswersCount = answerResults.filter(result => result).length;
+    const correctAnswersCount = resultsToUse.filter(result => result).length;
     const finalScore = correctAnswersCount * 5;
     setScore(finalScore); // Update score to ensure it matches correct answers
     
